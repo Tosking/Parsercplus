@@ -94,6 +94,7 @@ void Parser::MethodS(){
    }
    GetC();
    x = MethodE();
+   cout << (char)x << endl;
    GetC();
    if(c != ';'){
        Error("Missing symbol ';'!");
