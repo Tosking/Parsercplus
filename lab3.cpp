@@ -2,15 +2,14 @@
 #include <vector>
 #include <string>
 #include <fstream>
-#include <format>
 
 using namespace std;
 
 struct var{
     public:
         string name;
-        long val;
-        var(string& name, long val);
+        bool val;
+        var(string& name, bool val);
 };
 
 ifstream in;
@@ -23,16 +22,16 @@ class Parser{
         bool CheckA();
     public:
         inline void GetC();
-        long GetVarValue(string& str);
-        long& GetVarAdress(string str);
+        bool GetVarValue(string& str);
+        bool& GetVarAdress(string str);
 
-        long MethodC();
+        bool MethodC();
         void MethodS();
-        long& MethodL();
-        long MethodE();
-        long MethodT();
-        long MethodM();
-        long MethodI();
+        bool& MethodL();
+        bool MethodE();
+        bool MethodT();
+        bool MethodM();
+        bool MethodI();
 
         void Print();
         void PrintAll();
@@ -60,7 +59,7 @@ inline void Parser::GetC(){
     c = in.get();
 }
 
-long Parser::GetVarValue(string& str){
+bool Parser::GetVarValue(string& str){
     if(str.empty() || str.size()==0){
         Error("Invalid Syntax!");
     }
@@ -73,7 +72,7 @@ long Parser::GetVarValue(string& str){
     return 0;
 }
 
-long& Parser::GetVarAdress(string str){
+bool& Parser::GetVarAdress(string str){
     if(str.empty() || str.size()==0){
         Error("Invalid Syntax!");
     }
@@ -88,21 +87,20 @@ long& Parser::GetVarAdress(string str){
 }
 
 void Parser::MethodS(){
-   long x = MethodL();
+   bool x = MethodL();
    if(c != '='){
        Error("Missing symbol '='!");
    }
    GetC();
    x = MethodE();
-   cout << (char)x << endl;
-   GetC();
+   varlist[varlist.size()-1].val = x;
    if(c != ';'){
        Error("Missing symbol ';'!");
    }
    GetC();
 }
 
-long& Parser::MethodL(){
+bool& Parser::MethodL(){
     string str;
     bool flag = 0;
     while(CheckA() || (c == '0' || c == '1')){
@@ -112,8 +110,8 @@ long& Parser::MethodL(){
     return GetVarAdress(str);
 }
 
-long Parser::MethodE(){
-    long x = MethodT();
+bool Parser::MethodE(){
+    bool x = MethodT();
     while(c == '|'){
         GetC();
         x |= MethodT();
@@ -121,8 +119,8 @@ long Parser::MethodE(){
     return x;
 }
 
-long Parser::MethodT(){
-    long x = MethodM();
+bool Parser::MethodT(){
+    bool x = MethodM();
     while(c == '&'){
         GetC();
         x &= MethodM();
@@ -130,14 +128,14 @@ long Parser::MethodT(){
     return x;
 }
 
-long Parser::MethodM(){
+bool Parser::MethodM(){
     if(c == '~'){
         GetC();
         return ~MethodM();
     }
     if(c == '('){
         GetC();
-        long x = MethodE();
+        bool x = MethodE();
         GetC();
         if(c != ')'){
             Error("Invalid Syntax!");
@@ -157,9 +155,8 @@ long Parser::MethodM(){
     return 0;
 }
 
-long Parser::MethodI(){
+bool Parser::MethodI(){
     string str;
-    bool flag = 0;
     while(CheckA() || (c == '0' || c == '1')){
         str += c;
         GetC();
@@ -167,8 +164,10 @@ long Parser::MethodI(){
     return GetVarValue(str);
 }
 
-long Parser::MethodC(){
-    return c;
+bool Parser::MethodC(){
+    bool prev = (char)c - '0';
+    GetC();
+    return prev;
 }
 void Parser::Print()
 {
@@ -200,7 +199,7 @@ void Parser::Run(){
     }
 }
 
-var::var(string& name, long val){
+var::var(string& name, bool val){
     this->name = name;
     this->val = val;
 }
