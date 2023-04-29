@@ -87,13 +87,12 @@ bool& Parser::GetVarAdress(string str){
 }
 
 void Parser::MethodS(){
-   bool x = MethodL();
+   bool &x = MethodL();
    if(c != '='){
        Error("Missing symbol '='!");
    }
    GetC();
    x = MethodE();
-   varlist[varlist.size()-1].val = x;
    if(c != ';'){
        Error("Missing symbol ';'!");
    }
@@ -131,18 +130,18 @@ bool Parser::MethodT(){
 bool Parser::MethodM(){
     if(c == '~'){
         GetC();
-        return ~MethodM();
+        return !MethodM();
     }
     if(c == '('){
         GetC();
         bool x = MethodE();
-        GetC();
         if(c != ')'){
             Error("Invalid Syntax!");
             return 0;
         }
         else{
-           return x;
+            GetC();
+            return x;
         }
     }
     if(c == '1' || c == '0'){
@@ -193,10 +192,11 @@ void Parser::Run(){
              GetC();
          if (c == EOF)
              break;
-         cout << "Operator:" << i << endl;
+         cout << "Operator " << i << ": ";
          MethodS();
          Print();
     }
+    PrintAll();
 }
 
 var::var(string& name, bool val){
