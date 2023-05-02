@@ -146,13 +146,13 @@ bool Parser::MethodM(){
     if(c == '('){
         GetC();
         bool x = MethodE();
-        GetC();
         if(c != ')'){
             Error("Invalid Syntax!");
             return 0;
         }
         else{
-           return x;
+            GetC();
+            return x;
         }
     }
     if(c == '1' || c == '0'){
@@ -206,6 +206,7 @@ void Parser::Run(){
              break;
          MethodS();
     }
+    PrintAll();
 }
 
 var::var(string& name, bool val){
