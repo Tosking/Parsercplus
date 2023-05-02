@@ -20,6 +20,7 @@ class Parser{
         int c = EOF;
         int last = -1;
         bool CheckA();
+        int TriadCount = 0;
     public:
         inline void GetC();
         bool GetVarValue(string& str);
@@ -81,22 +82,23 @@ bool& Parser::GetVarAdress(string str){
             return varlist[i].val;
         }
     }
-
+    cout << TriadCount++ <<": V(" << str << ", @)" << endl;
     varlist.push_back(var{str, 0});
     return varlist[varlist.size() - 1].val;
 }
 
 void Parser::MethodS(){
-   bool x = MethodL();
+   int x = MethodL();
    if(c != '='){
        Error("Missing symbol '='!");
    }
    GetC();
-   x = MethodE();
+   int y = MethodE();
    varlist[varlist.size()-1].val = x;
    if(c != ';'){
        Error("Missing symbol ';'!");
    }
+   cout << TriadCount++ << ": =(^" << x << ", ^" << y << ")" << endl;
    GetC();
 }
 
@@ -111,19 +113,25 @@ bool& Parser::MethodL(){
 }
 
 bool Parser::MethodE(){
-    bool x = MethodT();
+    int x = MethodT();
+    int y;
     while(c == '|'){
         GetC();
-        x |= MethodT();
+        y = MethodT();
+        cout << TriadCount++ << ": |(^" << x << ", ^" << y << ")" << endl;
+        x = TriadCount;
     }
     return x;
 }
 
 bool Parser::MethodT(){
-    bool x = MethodM();
+    int x = MethodM();
+    int y;
     while(c == '&'){
         GetC();
-        x &= MethodM();
+        y = MethodM();
+        cout << TriadCount++ << ": &(^" << x << ", ^" << y << ")" << endl;
+        x = TriadCount;
     }
     return x;
 }
@@ -131,7 +139,9 @@ bool Parser::MethodT(){
 bool Parser::MethodM(){
     if(c == '~'){
         GetC();
-        return ~MethodM();
+        int x = MethodM();
+        cout << TriadCount++ << ": ~(^" << x << ", @)" << endl;
+        return TriadCount;
     }
     if(c == '('){
         GetC();
@@ -167,7 +177,8 @@ bool Parser::MethodI(){
 bool Parser::MethodC(){
     bool prev = (char)c - '0';
     GetC();
-    return prev;
+    cout << TriadCount++ << ": C(" << prev << ", @)" << endl;
+    return TriadCount;
 }
 void Parser::Print()
 {
@@ -193,9 +204,7 @@ void Parser::Run(){
              GetC();
          if (c == EOF)
              break;
-         cout << "Operator:" << i << endl;
          MethodS();
-         Print();
     }
 }
 
