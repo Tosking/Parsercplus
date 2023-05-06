@@ -5,19 +5,46 @@
 
 using namespace std;
 
-struct var{
+class Base {
+    public:
+        string value;
+        virtual string GetType() {return "@";}
+};
+
+class Constant : public Base {
+    public:
+        string GetType() {return "C";}
+        Constant(string value){ this->value = value; }
+};
+
+class Variable : public Base {
     public:
         string name;
-        int triad;
-        int val;
-        var(string& name, int val, int triad);
+        string GetType() {return "V";}
+        Variable(string value){ this->value = value; }
+};
+
+class Reference : public Base {
+    public:
+        int id;
+        Reference(int id){this->id = id;}
+};
+
+class Triad {
+    public:
+        char op;
+        Base* op1;
+        Base* op2;
+        bool deleted = false;
+        Triad(char op, Base* op1, Base* op2){this->op = op; this->op1 = op1; this->op2 = op2;}
 };
 
 ifstream in;
 
 class Parser{
     private:
-        vector<var> varlist;
+        vector<Variable> varlist;
+        vector<Triad> triadlist;
         int c = EOF;
         int last = -1;
         int CheckA();
@@ -25,11 +52,11 @@ class Parser{
     public:
         inline void GetC();
         int GetVarValue(string& str);
-        int GetVarAdress(string str);
+        Variable GetVarAdress(string str);
 
         int MethodC();
         void MethodS();
-        int MethodL();
+        Variable MethodL();
         int MethodE();
         int MethodT();
         int MethodM();
@@ -39,6 +66,7 @@ class Parser{
         void PrintAll();
         void Run();
 };
+
 
 int main(){
     in.open("test.txt", ios::binary);
@@ -67,7 +95,7 @@ int Parser::GetVarValue(string& str){
     }
     for(int i = 0; i < varlist.size(); i++){
         if(varlist[i].name == str){
-            cout << TriadCount++ <<": V(" << str << ", @)" << endl;
+            Triad triad("V", varlist[i], new Base);
             return TriadCount - 1;
         }
     }
@@ -75,18 +103,18 @@ int Parser::GetVarValue(string& str){
     return 0;
 }
 
-int Parser::GetVarAdress(string str){
+Variable Parser::GetVarAdress(string str){
     if(str.empty() || str.size()==0){
         Error("Invalid Syntax!");
     }
     for(int i = 0; i < varlist.size(); i++){
         if(varlist[i].name == str){
-            cout << TriadCount++ <<": V(" << str << ", @)" << endl;
-            return TriadCount - 1;
+            return varlist[i];
         }
     }
-    cout << TriadCount++ <<": V(" << str << ", @)" << endl;
-    varlist.push_back(var{str, 0, TriadCount - 1});
+    Variable var = Variable(NULL);
+    var.name = str;
+    varlist.push_back(var);
     return varlist[varlist.size() - 1].triad;
 }
 
@@ -101,11 +129,11 @@ void Parser::MethodS(){
    if(c != ';'){
        Error("Missing symbol ';'!");
    }
-   cout << TriadCount++ << ": =(^" << x << ", ^" << y << ")" << endl;
+   x.name = y;
    GetC();
 }
 
-int Parser::MethodL(){
+Variable Parser::MethodL(){
     string str;
     int flag = 0;
     while(CheckA() || (c == '0' || c == '1')){
@@ -121,8 +149,10 @@ int Parser::MethodE(){
     while(c == '|'){
         GetC();
         y = MethodT();
-        cout << TriadCount++ << ": |(^" << x << ", ^" << y << ")" << endl;
-        x = TriadCount - 1;
+        Triad triad('|', new Reference {x}, new Reference {y});
+        triadlist.push_back(triad);
+        TriadCount++;
+        x = TriadCount;
     }
     return x;
 }
@@ -133,8 +163,10 @@ int Parser::MethodT(){
     while(c == '&'){
         GetC();
         y = MethodM();
-        cout << TriadCount++ << ": &(^" << x << ", ^" << y << ")" << endl;
-        x = TriadCount - 1;
+        Triad triad('&', new Reference {x}, new Reference {y});
+        triadlist.push_back(triad);
+        TriadCount++;
+        x = TriadCount;
     }
     return x;
 }
@@ -143,8 +175,10 @@ int Parser::MethodM(){
     if(c == '~'){
         GetC();
         int x = MethodM();
-        cout << TriadCount++ << ": ~(^" << x << ", @)" << endl;
-        return TriadCount - 1;
+        Triad triad('~', new Reference {x}, new Base);
+        triadlist.push_back(triad);
+        TriadCount++;
+        return TriadCount;
     }
     if(c == '('){
         GetC();
@@ -178,17 +212,18 @@ int Parser::MethodI(){
 }
 
 int Parser::MethodC(){
-    int prev = (char)c - '0';
+    Triad triad('C', new Constant(("" + (char)c)), new Base);
+    triadlist.push_back(triad);
+    TriadCount++;
     GetC();
-    cout << TriadCount++ << ": C(" << prev << ", @)" << endl;
-    return TriadCount - 1;
+    return TriadCount;
 }
 void Parser::Print()
 {
     if (varlist.size() == 0)
         cout << "No varibales defined yet.\n";
     else
-        cout << varlist[varlist.size()-1].name << " = " << varlist[varlist.size()-1].val << endl;
+        cout << varlist[varlist.size()-1].name << " = " << varlist[varlist.size()-1].value << endl;
 }
 
 void Parser::PrintAll()
@@ -197,7 +232,7 @@ void Parser::PrintAll()
         cout << "No variables defined yet." << endl;
     else
         for (int i = 0; i < varlist.size(); i++)
-            cout<<varlist[i].name<< " = " << varlist[i].val<<endl;
+            cout<<varlist[i].name<< " = " << varlist[i].value<<endl;
 }
 
 void Parser::Run(){
@@ -211,8 +246,3 @@ void Parser::Run(){
     }
 }
 
-var::var(string& name, int val, int triad){
-    this->name = name;
-    this->val = val;
-    this->triad = triad;
-}
