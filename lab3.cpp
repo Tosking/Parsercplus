@@ -7,26 +7,31 @@ using namespace std;
 
 class Base {
     public:
+        virtual string GetOp() {return "@";}
         string value;
-        virtual string GetType() {return "@";}
+        virtual ~Base();
 };
+
+Base::~Base(){}
 
 class Constant : public Base {
     public:
-        string GetType() {return "C";}
-        Constant(string value){ this->value = value; }
+        char value;
+        string GetOp() {return to_string(value);}
+        Constant(char value){ this->value = value; }
 };
 
 class Variable : public Base {
     public:
-        string name;
         string GetType() {return "V";}
+        string GetOp() {return value;}
         Variable(string value){ this->value = value; }
 };
 
 class Reference : public Base {
     public:
         int id;
+        string GetOp() {return "^" + to_string(id);}
         Reference(int id){this->id = id;}
 };
 
@@ -52,11 +57,11 @@ class Parser{
     public:
         inline void GetC();
         int GetVarValue(string& str);
-        Variable GetVarAdress(string str);
+        int GetVarAdress(string str);
 
         int MethodC();
         void MethodS();
-        Variable MethodL();
+        int MethodL();
         int MethodE();
         int MethodT();
         int MethodM();
@@ -94,28 +99,28 @@ int Parser::GetVarValue(string& str){
         Error("Invalid Syntax!");
     }
     for(int i = 0; i < varlist.size(); i++){
-        if(varlist[i].name == str){
-            Triad triad("V", varlist[i], new Base);
-            return TriadCount - 1;
+        if(varlist[i].GetOp() == str){
+            Triad triad('V', new Variable (str), new Base{});
+            triadlist.push_back(triad);
+            return TriadCount++ - 1;
         }
     }
     Error("Invalid Indentifer!");
     return 0;
 }
 
-Variable Parser::GetVarAdress(string str){
+int Parser::GetVarAdress(string str){
     if(str.empty() || str.size()==0){
         Error("Invalid Syntax!");
     }
     for(int i = 0; i < varlist.size(); i++){
-        if(varlist[i].name == str){
-            return varlist[i];
+        if(varlist[i].GetOp() == str){
+            return TriadCount++ - 1;
         }
     }
-    Variable var = Variable(NULL);
-    var.name = str;
+    Variable var = Variable(str);
     varlist.push_back(var);
-    return varlist[varlist.size() - 1].triad;
+    return TriadCount++ - 1;
 }
 
 void Parser::MethodS(){
@@ -125,15 +130,15 @@ void Parser::MethodS(){
    }
    GetC();
    int y = MethodE();
-   varlist[varlist.size()-1].val = x;
    if(c != ';'){
        Error("Missing symbol ';'!");
    }
-   x.name = y;
+   Triad triad('=', new Reference{x}, new Reference{y});
+   triadlist.push_back(triad);
    GetC();
 }
 
-Variable Parser::MethodL(){
+int Parser::MethodL(){
     string str;
     int flag = 0;
     while(CheckA() || (c == '0' || c == '1')){
@@ -212,18 +217,11 @@ int Parser::MethodI(){
 }
 
 int Parser::MethodC(){
-    Triad triad('C', new Constant(("" + (char)c)), new Base);
+    Triad triad('C', new Constant{(char)c}, new Base{});
     triadlist.push_back(triad);
     TriadCount++;
     GetC();
     return TriadCount;
-}
-void Parser::Print()
-{
-    if (varlist.size() == 0)
-        cout << "No varibales defined yet.\n";
-    else
-        cout << varlist[varlist.size()-1].name << " = " << varlist[varlist.size()-1].value << endl;
 }
 
 void Parser::PrintAll()
@@ -231,8 +229,8 @@ void Parser::PrintAll()
     if (!varlist.size())
         cout << "No variables defined yet." << endl;
     else
-        for (int i = 0; i < varlist.size(); i++)
-            cout<<varlist[i].name<< " = " << varlist[i].value<<endl;
+        for (int i = 0; i < triadlist.size(); i++)
+            cout << triadlist[i].op << "(" << triadlist[i].op1->GetOp() << ", " << triadlist[i].op2->GetOp() << ")" << endl;
 }
 
 void Parser::Run(){
@@ -244,5 +242,6 @@ void Parser::Run(){
              break;
          MethodS();
     }
+    PrintAll();
 }
 
