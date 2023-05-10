@@ -16,9 +16,8 @@ Base::~Base(){}
 
 class Constant : public Base {
     public:
-        char value;
-        string GetOp() {return to_string(value);}
-        Constant(char value){ this->value = value; }
+        string GetOp() {return value;}
+        Constant(string value){ this->value = value; }
 };
 
 class Variable : public Base {
@@ -40,7 +39,7 @@ class Triad {
         char op;
         Base* op1;
         Base* op2;
-        bool deleted = false;
+        bool isDel = false;
         Triad(char op, Base* op1, Base* op2){this->op = op; this->op1 = op1; this->op2 = op2;}
 };
 
@@ -58,7 +57,7 @@ class Parser{
         inline void GetC();
         int GetVarValue(string& str);
         int GetVarAdress(string str);
-
+        void Optimize();
         int MethodC();
         void MethodS();
         int MethodL();
@@ -102,7 +101,7 @@ int Parser::GetVarValue(string& str){
         if(varlist[i].GetOp() == str){
             Triad triad('V', new Variable (str), new Base{});
             triadlist.push_back(triad);
-            return TriadCount++ - 1;
+            return TriadCount++;
         }
     }
     Error("Invalid Indentifer!");
@@ -115,12 +114,16 @@ int Parser::GetVarAdress(string str){
     }
     for(int i = 0; i < varlist.size(); i++){
         if(varlist[i].GetOp() == str){
-            return TriadCount++ - 1;
+            Triad triad('V', new Variable (str), new Base{});
+            triadlist.push_back(triad);
+            return TriadCount++;
         }
     }
+    Triad triad('V', new Variable (str), new Base{});
+    triadlist.push_back(triad);
     Variable var = Variable(str);
     varlist.push_back(var);
-    return TriadCount++ - 1;
+    return TriadCount++;
 }
 
 void Parser::MethodS(){
@@ -157,7 +160,7 @@ int Parser::MethodE(){
         Triad triad('|', new Reference {x}, new Reference {y});
         triadlist.push_back(triad);
         TriadCount++;
-        x = TriadCount;
+        x = TriadCount - 1;
     }
     return x;
 }
@@ -171,7 +174,7 @@ int Parser::MethodT(){
         Triad triad('&', new Reference {x}, new Reference {y});
         triadlist.push_back(triad);
         TriadCount++;
-        x = TriadCount;
+        x = TriadCount - 1;
     }
     return x;
 }
@@ -183,7 +186,7 @@ int Parser::MethodM(){
         Triad triad('~', new Reference {x}, new Base);
         triadlist.push_back(triad);
         TriadCount++;
-        return TriadCount;
+        return TriadCount - 1;
     }
     if(c == '('){
         GetC();
@@ -217,11 +220,29 @@ int Parser::MethodI(){
 }
 
 int Parser::MethodC(){
-    Triad triad('C', new Constant{(char)c}, new Base{});
+    Triad triad('C', new Constant{to_string(c - 48)}, new Base{});
     triadlist.push_back(triad);
-    TriadCount++;
     GetC();
-    return TriadCount;
+    return TriadCount++;
+}
+
+void Parser::Optimize(){
+    int x;
+    int y;
+    for(int i = 0; i < triadlist.size(); i++){
+        x = atoi(triadlist[i].op1->GetOp().c_str() + 1);
+        y = atoi(triadlist[i].op2->GetOp().c_str() + 1);
+        if(triadlist[x].op == 'C'){
+            triadlist[x].isDel = true;
+            delete triadlist[i].op1;
+            triadlist[i].op1 = new Constant(triadlist[x].op1->GetOp());
+        }
+        else if(triadlist[y].op == 'C')
+            triadlist[y].isDel = true;
+            delete triadlist[i].op2;
+            triadlist[i].op2 = new Constant(triadlist[y].op2->GetOp());
+    }
+
 }
 
 void Parser::PrintAll()
@@ -230,7 +251,7 @@ void Parser::PrintAll()
         cout << "No variables defined yet." << endl;
     else
         for (int i = 0; i < triadlist.size(); i++)
-            cout << triadlist[i].op << "(" << triadlist[i].op1->GetOp() << ", " << triadlist[i].op2->GetOp() << ")" << endl;
+            cout << i+1 << ": " << triadlist[i].op << "(" << triadlist[i].op1->GetOp() << ", " << triadlist[i].op2->GetOp() << ")" << endl;
 }
 
 void Parser::Run(){
@@ -242,6 +263,7 @@ void Parser::Run(){
              break;
          MethodS();
     }
+    Optimize();
     PrintAll();
 }
 
