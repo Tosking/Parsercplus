@@ -230,19 +230,64 @@ void Parser::Optimize(){
     int x;
     int y;
     for(int i = 0; i < triadlist.size(); i++){
-        x = atoi(triadlist[i].op1->GetOp().c_str() + 1);
-        y = atoi(triadlist[i].op2->GetOp().c_str() + 1);
-        if(triadlist[x].op == 'C'){
-            triadlist[x].isDel = true;
-            delete triadlist[i].op1;
-            triadlist[i].op1 = new Constant(triadlist[x].op1->GetOp());
-        }
-        else if(triadlist[y].op == 'C')
-            triadlist[y].isDel = true;
-            delete triadlist[i].op2;
-            triadlist[i].op2 = new Constant(triadlist[y].op2->GetOp());
-    }
+       x = atoi(triadlist[i].op1->GetOp().c_str() + 1);
+       y = atoi(triadlist[i].op2->GetOp().c_str() + 1);
+       x--;
+       y--;
+       if(triadlist[x].op == '='){
 
+       }
+       if (triadlist[i].op == '|' || triadlist[i].op == '&' )
+       {
+           if (triadlist[y].op == 'C')
+           {
+               triadlist[y].isDel = true;
+               delete triadlist[i].op2;
+               triadlist[i].op2 = new Constant(triadlist[y].op1->GetOp());
+               if (triadlist[x].op == 'C')
+               {
+                   triadlist[x].isDel = true;
+                   triadlist[i].op1 = new Constant(triadlist[x].op1->GetOp());
+                   if (triadlist[i].op == '|')
+                   {
+                       triadlist[i].op = 'C';
+                       triadlist[i].op1 = new Constant(to_string(atoi(triadlist[i].op1->GetOp().c_str()) |
+                                                                 (atoi(triadlist[i].op2->GetOp().c_str()))));
+                       triadlist[i].op2 = new Base();
+                   }
+                   else
+                   {
+                       triadlist[i].op = 'C';
+                       triadlist[i].op1 = new Constant(to_string(atoi(triadlist[i].op1->GetOp().c_str()) &
+                                                                 (atoi(triadlist[i].op2->GetOp().c_str()))));
+                       triadlist[i].op2 = new Base();
+                   }
+               }
+           }
+           else if (triadlist[x].op == 'C')
+           {
+               triadlist[x].isDel = true;
+               triadlist[i].op1 = new Constant(triadlist[x].op1->GetOp());
+           }
+       }
+       else if (triadlist[i].op == '~')
+       {
+           if (triadlist[x].op == 'C')
+           {
+               triadlist[x].isDel = true;
+               triadlist[i].op1 = new Constant(to_string(~(atoi(triadlist[y].op1->GetOp().c_str()))));
+               triadlist[i].op = 'C';
+           }
+       }
+       else if (triadlist[i].op == '=')
+       {
+           if (triadlist[x].op == 'V')
+           {
+               triadlist[x].isDel = true;
+               triadlist[i].op1 =new Variable(triadlist[x].op1->GetOp());
+           }
+       }
+    }
 }
 
 void Parser::PrintAll()
@@ -251,7 +296,8 @@ void Parser::PrintAll()
         cout << "No variables defined yet." << endl;
     else
         for (int i = 0; i < triadlist.size(); i++)
-            cout << i+1 << ": " << triadlist[i].op << "(" << triadlist[i].op1->GetOp() << ", " << triadlist[i].op2->GetOp() << ")" << endl;
+            if(!triadlist[i].isDel)
+                cout << i+1 << ": " << triadlist[i].op << "(" << triadlist[i].op1->GetOp() << ", " << triadlist[i].op2->GetOp() << ")" << endl;
 }
 
 void Parser::Run(){
