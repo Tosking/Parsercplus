@@ -68,6 +68,7 @@ class Parser{
 
         void Print();
         void PrintAll();
+        void PrintAllB();
         void Run();
 };
 
@@ -99,7 +100,7 @@ int Parser::GetVarValue(string& str){
     }
     for(int i = 0; i < varlist.size(); i++){
         if(varlist[i].GetOp() == str){
-            Triad triad('V', new Variable (str), new Base{});
+            Triad triad('V', new Variable {str}, new Base{});
             triadlist.push_back(triad);
             return TriadCount++;
         }
@@ -114,7 +115,7 @@ int Parser::GetVarAdress(string str){
     }
     for(int i = 0; i < varlist.size(); i++){
         if(varlist[i].GetOp() == str){
-            Triad triad('V', new Variable (str), new Base{});
+            Triad triad('V', new Variable {str}, new Base{});
             triadlist.push_back(triad);
             return TriadCount++;
         }
@@ -138,6 +139,7 @@ void Parser::MethodS(){
    }
    Triad triad('=', new Reference{x}, new Reference{y});
    triadlist.push_back(triad);
+   TriadCount++;
    GetC();
 }
 
@@ -234,9 +236,6 @@ void Parser::Optimize(){
        y = atoi(triadlist[i].op2->GetOp().c_str() + 1);
        x--;
        y--;
-       if(triadlist[x].op == '='){
-
-       }
        if (triadlist[i].op == '|' || triadlist[i].op == '&' )
        {
            if (triadlist[y].op == 'C')
@@ -264,11 +263,6 @@ void Parser::Optimize(){
                    }
                }
            }
-           else if (triadlist[x].op == 'C')
-           {
-               triadlist[x].isDel = true;
-               triadlist[i].op1 = new Constant(triadlist[x].op1->GetOp());
-           }
        }
        else if (triadlist[i].op == '~')
        {
@@ -294,10 +288,17 @@ void Parser::PrintAll()
 {
     if (!varlist.size())
         cout << "No variables defined yet." << endl;
-    else
+    else{
+        cout << "After:" << endl;
         for (int i = 0; i < triadlist.size(); i++)
             if(!triadlist[i].isDel)
                 cout << i+1 << ": " << triadlist[i].op << "(" << triadlist[i].op1->GetOp() << ", " << triadlist[i].op2->GetOp() << ")" << endl;
+    }
+}
+void Parser::PrintAllB(){
+    cout << "Before:" << endl;
+    for (int i = 0; i < triadlist.size(); i++)
+        cout << i+1 << ": " << triadlist[i].op << "(" << triadlist[i].op1->GetOp() << ", " << triadlist[i].op2->GetOp() << ")" << endl;
 }
 
 void Parser::Run(){
@@ -309,6 +310,7 @@ void Parser::Run(){
              break;
          MethodS();
     }
+    PrintAllB();
     Optimize();
     PrintAll();
 }
