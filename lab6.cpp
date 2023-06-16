@@ -186,6 +186,7 @@ int Parser::CheckA(){
 
 inline void Parser::GetC(){
     c = in.get();
+    cout << (char)c << endl;
 }
 
 int Parser::GetVarValue(string& src){
