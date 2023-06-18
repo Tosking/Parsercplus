@@ -186,7 +186,6 @@ int Parser::CheckA(){
 
 inline void Parser::GetC(){
     c = in.get();
-    cout << (char)c << endl;
 }
 
 int Parser::GetVarValue(string& src){
@@ -195,9 +194,7 @@ int Parser::GetVarValue(string& src){
     }
     for(int i = 0; i < varlist.size(); i++){
         if(varlist[i].GetOp() == src){
-            Triad triad('V', new Variable {src}, new Base{});
-            triadlist.push_back(triad);
-            return TriadCount++;
+            return true;
         }
     }
     Error("Invalid Indentifer!");
@@ -210,16 +207,12 @@ int Parser::GetVarAdress(string src){
     }
     for(int i = 0; i < varlist.size(); i++){
         if(varlist[i].GetOp() == src){
-            Triad triad('V', new Variable {src}, new Base{});
-            triadlist.push_back(triad);
-            return TriadCount++;
+            return true;
         }
     }
-    Triad triad('V', new Variable (src), new Base{});
-    triadlist.push_back(triad);
     Variable var = Variable(src);
     varlist.push_back(var);
-    return TriadCount++;
+    return true;
 }
 
 inline void Parser::GetLex(){
@@ -242,15 +235,9 @@ inline void Parser::GetLex(){
      }
      else if (c >= '0' && c <= '1')
      {
-         long x = 0;
-         while (c >='0' && c <='1')
-         {
-             x *= 2;
-             x += c - '0';
-             GetC();
-         }
-         value = x;
+         value = c - '0';
          lex = 'C';
+         GetC();
      }
      else if (strchr(operands.c_str(), c))
      {
@@ -371,7 +358,7 @@ char Parser::Convolution(){
      for (int j = attlist.size() - 1; j >= 1; j--)
          if (attlist[j].CAttitude == C)
              return j;
-    Error("Cant Find Attitude");
+    return 0;
  }
 
 void Parser::Check(string src,size_t pos){
@@ -444,8 +431,6 @@ void Parser::Run(){
      do
      {
          GetLex();
-        if(c == -1)
-            break;
          Analize();
          if (lex == ';')
          {
@@ -457,6 +442,7 @@ void Parser::Run(){
      } while (lex != '#');
     for (int i = 0; i < triadlist.size(); i++)
      {
+        cout << (i + 1) << ":";
         triadlist[i].OutTriad();
      }
 }
