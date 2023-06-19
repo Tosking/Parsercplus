@@ -432,12 +432,6 @@ void Parser::Run(){
      {
          GetLex();
          Analize();
-         if (lex == ';')
-         {
-             for (auto it = attlist.begin(); it != attlist.end(); ++it)
-                 std::cout << it->C;
-             std::cout << std::endl;
-         }
          
      } while (lex != '#');
     for (int i = 0; i < triadlist.size(); i++)
